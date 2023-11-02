@@ -4,8 +4,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.domain.Client;
 import org.example.exception.BadRequestException;
+import org.example.mapper.ClientMapper;
 import org.example.repository.ClientRepository;
 import org.example.request.post.ClientPostRequestBody;
+import org.example.request.put.ClientPutRequestBody;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,8 +19,12 @@ import java.util.List;
 public class ClientService {
     private final ClientRepository clientRepository;
 
-    public Page<Client> listAll(Pageable pageable) {
+    public Page<Client> listAllPaginated(Pageable pageable) {
         return clientRepository.findAll(pageable);
+    }
+
+    public List<Client> listAllUnpaginated() {
+        return clientRepository.findAll();
     }
 
     public List<Client> findByFirstName(String firstName) {
@@ -42,4 +48,16 @@ public class ClientService {
     public Client save(ClientPostRequestBody clientPostRequestBody) {
         return clientRepository.save(ClientMapper.INSTANCE.toClient(clientPostRequestBody));
     }
+
+    public void delete(long id) {
+        clientRepository.delete(this.findByIdOrThrowBadRequestException(id));
+    }
+
+    public void replace(ClientPutRequestBody clientPutRequestBody) {
+        Client savedClient = this.findByIdOrThrowBadRequestException(clientPutRequestBody.getId());
+        Client replacementClient = ClientMapper.INSTANCE.toClient(clientPutRequestBody);
+        replacementClient.setId(savedClient.getId());
+        clientRepository.save(replacementClient);
+    }
+
 }
